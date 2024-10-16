@@ -8,6 +8,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include "FormDisplay.h"
+#include <Library/DebugLib.h>
 
 //
 // Search table for UiDisplayMenu()
@@ -4122,7 +4123,7 @@ FormDisplay (
 
   gUserInput = UserInputData;
   gFormData  = FormData;
-
+  // DEBUG ((DEBUG_INFO, "Shawn debug FormDisplay start\n"));
   //
   // Process the status info first.
   //
@@ -4133,8 +4134,9 @@ FormDisplay (
     //
     return EFI_SUCCESS;
   }
-
+  // DEBUG ((DEBUG_INFO, "Shawn debug DisplayPageFrame before\n"));
   Status = DisplayPageFrame (FormData, &gStatementDimensions);
+  // DEBUG ((DEBUG_INFO, "Shawn debug DisplayPageFrame after\n"));
   if (EFI_ERROR (Status)) {
     return Status;
   }

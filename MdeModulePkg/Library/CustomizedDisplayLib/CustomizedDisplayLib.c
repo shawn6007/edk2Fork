@@ -7,6 +7,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 #include "CustomizedDisplayLibInternal.h"
+#include <Library/DebugLib.h>
 
 EFI_GUID  gCustomizedDisplayLibGuid = {
   0x99fdc8fd, 0x849b, 0x4eba, { 0xad, 0x13, 0xfb, 0x96, 0x99, 0xc9, 0xa, 0x4d }
@@ -63,7 +64,7 @@ DisplayPageFrame (
   if ((FormData == NULL) || (ScreenForStatement == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
-
+  // DEBUG ((DEBUG_INFO, "Shawn debug DisplayPageFrame start\n"));
   Status = ScreenDiemensionInfoValidate (FormData);
   if (EFI_ERROR (Status)) {
     return Status;
@@ -99,6 +100,7 @@ DisplayPageFrame (
   // Don't print frame for modal form.
   //
   if ((FormData->Attribute & HII_DISPLAY_MODAL) != 0) {
+    // DEBUG ((DEBUG_INFO, "Shawn debug DisplayPageFrame 1\n"));
     return EFI_SUCCESS;
   }
 
@@ -107,8 +109,10 @@ DisplayPageFrame (
   }
 
   PrintFramework (FormData);
-
+  // DEBUG ((DEBUG_INFO, "Shawn debug DisplayPageFrame 2\n"));
+  // DEBUG ((DEBUG_INFO, "Shawn SettingChangedFlag = %x\n", FormData->SettingChangedFlag));
   UpdateStatusBar (NV_UPDATE_REQUIRED, FormData->SettingChangedFlag);
+  // DEBUG ((DEBUG_INFO, "Shawn debug DisplayPageFrame 3\n"));
 
   return EFI_SUCCESS;
 }
@@ -386,6 +390,7 @@ UpdateStatusBar (
       // Global setting support. Show configuration change on every form.
       //
       if (State) {
+        // DEBUG ((DEBUG_INFO, "Shawn NV_UPDATE_REQUIRED 1\n"));
         gST->ConOut->SetAttribute (gST->ConOut, INFO_TEXT);
         PrintStringAt (
           gScreenDimensions.LeftColumn + OptionWidth * 2,
@@ -393,6 +398,7 @@ UpdateStatusBar (
           gNvUpdateMessage
           );
       } else {
+        // DEBUG ((DEBUG_INFO, "Shawn NV_UPDATE_REQUIRED 2\n"));
         gST->ConOut->SetAttribute (gST->ConOut, KEYHELP_BACKGROUND);
         for (Index = 0; Index < (LibGetStringWidth (gNvUpdateMessage) - 2) / 2; Index++) {
           PrintStringAt (

@@ -1296,6 +1296,18 @@ BootFromFile (
   IN EFI_DEVICE_PATH_PROTOCOL  *FilePath
   );
 
+/**
+
+  Record changed setup data.
+
+**/
+EFI_STATUS
+EFIAPI
+AppendChangeItemInfo (
+  IN EFI_HII_HANDLE  HiiHandle,
+  IN EFI_STRING_ID   Prompt
+  );
+
 //
 // Global variable in this program (defined in data.c)
 //

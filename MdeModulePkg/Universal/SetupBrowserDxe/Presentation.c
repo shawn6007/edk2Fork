@@ -923,6 +923,7 @@ UpdateStatementStatusForForm (
     if (Question->Operand == EFI_IFR_PASSWORD_OP) {
       continue;
     }
+    DEBUG ((DEBUG_INFO, "Shawn UpdateStatementStatusForForm\n"));
 
     IsQuestionValueChanged (FormSet, Form, Question, GetSetValueWithBuffer);
   }
@@ -2166,6 +2167,7 @@ ProcessCallBackFunction (
           //
           Status = ValueChangedValidation (gCurrentSelection->FormSet, gCurrentSelection->Form, Statement);
           if (!EFI_ERROR (Status)) {
+            DEBUG ((DEBUG_INFO, "Shawn ValueChangedValidation 1\n"));
             //
             // check whether the question value  changed compared with edit buffer before updating edit buffer
             // if changed, set the ValueChanged flag to TRUE,in order to trig the CHANGED callback function
@@ -2209,6 +2211,7 @@ ProcessCallBackFunction (
         //
         InternalStatus = ValueChangedValidation (gCurrentSelection->FormSet, gCurrentSelection->Form, Statement);
         if (!EFI_ERROR (InternalStatus)) {
+          DEBUG ((DEBUG_INFO, "Shawn ValueChangedValidation 2\n"));
           //
           // check whether the question value  changed compared with edit buffer before updating edit buffer
           // if changed, set the ValueChanged flag to TRUE,in order to trig the CHANGED callback function
@@ -2590,6 +2593,7 @@ SetupBrowser (
           // Only question value has been changed, browser will trig CHANGED callback.
           //
           ProcessCallBackFunction (Selection, Selection->FormSet, Selection->Form, Statement, EFI_BROWSER_ACTION_CHANGED, FALSE);
+          DEBUG ((DEBUG_INFO, "Shawn ProcessCallBackFunction\n"));
           //
           // check whether the question value changed compared with buffer value
           // if doesn't change ,set the ValueChanged flag to FALSE ,in order not to display the "configuration changed "information on the screen
@@ -2603,6 +2607,7 @@ SetupBrowser (
         Status = ValueChangedValidation (gCurrentSelection->FormSet, gCurrentSelection->Form, Statement);
         if (!EFI_ERROR (Status) && (Statement->Operand != EFI_IFR_PASSWORD_OP)) {
           SetQuestionValue (gCurrentSelection->FormSet, gCurrentSelection->Form, Statement, GetSetValueWithEditBuffer);
+          DEBUG ((DEBUG_INFO, "Shawn SetQuestionValue\n"));
           //
           // Verify whether question value has checked, update the ValueChanged flag in Question.
           //

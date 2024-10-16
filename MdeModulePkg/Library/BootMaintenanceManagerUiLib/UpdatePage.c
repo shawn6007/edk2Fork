@@ -7,6 +7,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include "BootMaintenanceManager.h"
+#include <Library/DebugLib.h>
 
 /**
  Create the global UpdateData structure.
@@ -111,6 +112,7 @@ UpdatePageEnd (
   IN BMM_CALLBACK_DATA  *CallbackData
   )
 {
+  // DEBUG ((DEBUG_INFO, "Shawn debug UpdatePageEnd\n"));
   //
   // Create the "Apply changes" and "Discard changes" tags.
   //
@@ -152,6 +154,7 @@ UpdatePageEnd (
     mStartOpCodeHandle, // Label CallbackData->BmmCurrentPageId
     mEndOpCodeHandle    // LABEL_END
     );
+  // DEBUG ((DEBUG_INFO, "Shawn debug end\n"));
 }
 
 /**

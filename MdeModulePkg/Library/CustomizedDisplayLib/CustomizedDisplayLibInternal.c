@@ -733,7 +733,7 @@ InitializeLibStrings (
 
   gLibEmptyString = LibGetToken (STRING_TOKEN (EMPTY_STRING), mCDLStringPackHandle);
 
-  gNvUpdateMessage   = LibGetToken (STRING_TOKEN (NV_UPDATE_MESSAGE), mCDLStringPackHandle);
+  gNvUpdateMessage   = L"Shawn change";
   gInputErrorMessage = LibGetToken (STRING_TOKEN (INPUT_ERROR_MESSAGE), mCDLStringPackHandle);
 
   //

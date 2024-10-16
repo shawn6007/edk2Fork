@@ -282,6 +282,13 @@ formset
 
        label FORM_CON_MODE_ID;
        label LABEL_END;
+
+       oneof varid = BmmData.ShawnTest,
+         prompt      = STRING_TOKEN(STR_BOOT_SHAWN),
+         help        = STRING_TOKEN(STR_BOOT_SHAWN),
+         option text = STRING_TOKEN(STR_BOOT_SHAWN_YES), value = 0, flags = DEFAULT;
+         option text = STRING_TOKEN(STR_BOOT_SHAWN_NO), value = 1, flags = MANUFACTURING;
+       endoneof;
   endform;
 
   form formid = FORM_CON_COM_ID,

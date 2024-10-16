@@ -7,6 +7,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include "BootMaintenanceManager.h"
+#include <Library/DebugLib.h>
+#include <Library/UefiLib.h>
+#include <Library/CustomizedDisplayLib.h>
 
 #define FRONT_PAGE_KEY_OFFSET  0x4000
 //
@@ -81,6 +84,23 @@ BMM_CALLBACK_DATA  *mBmmCallbackInfo  = &gBootMaintenancePrivate;
 BOOLEAN            mAllMenuInit       = FALSE;
 BOOLEAN            mFirstEnterBMMForm = FALSE;
 
+EFI_GUID  mShawnGuid = {0xb794696e, 0x5b42, 0x4dd8, { 0x9b, 0x51, 0x4d, 0x9a, 0x8f, 0x13, 0x62, 0xb8 }};
+
+typedef struct _CHANGED_ITEM_INFO {
+  EFI_HII_HANDLE  HiiHandle;
+  EFI_STRING_ID   Prompt;
+} CHANGED_ITEM_INFO;
+
+typedef struct _CHANGED_ITEM_INFO_SET {
+  CHANGED_ITEM_INFO       *ChangedItemInfo;
+  UINTN                   HiiHandleCount;
+  UINTN                   TotalStrSize;
+} CHANGED_ITEM_INFO_SET;
+
+#define MAX_HII_FORM  0x10
+
+CHANGED_ITEM_INFO_SET    *mChangedItemInfoSet = NULL;
+
 /**
   Init all memu.
 
@@ -110,6 +130,41 @@ VOID
 CustomizeMenus (
   VOID
   );
+
+
+/**
+
+  Record changed setup data.
+
+**/
+EFI_STATUS
+EFIAPI
+AppendChangeItemInfo (
+  IN EFI_HII_HANDLE  HiiHandle,
+  IN EFI_STRING_ID   Prompt
+  )
+{
+  UINTN  HiiHandleCount;
+
+  ASSERT (HiiHandle != NULL);
+  ASSERT (Prompt != 0);
+
+  DEBUG ((DEBUG_INFO, "Shawn AppendChangeItemInfo start\n"));
+
+  HiiHandleCount = mChangedItemInfoSet->HiiHandleCount;
+
+  DEBUG ((DEBUG_INFO, "Shawn HiiHandleCount %x\n", HiiHandleCount));
+  DEBUG ((DEBUG_INFO, "Shawn HiiHandleCount %x\n", HiiHandle));
+  DEBUG ((DEBUG_INFO, "Shawn HiiHandleCount %x\n", Prompt));
+
+  mChangedItemInfoSet->ChangedItemInfo[HiiHandleCount].HiiHandle = HiiHandle;
+  mChangedItemInfoSet->ChangedItemInfo[HiiHandleCount].Prompt = Prompt;
+  mChangedItemInfoSet->HiiHandleCount++;
+  mChangedItemInfoSet->TotalStrSize += 0;
+
+  return EFI_SUCCESS;
+}
+
 
 /**
   This function will change video resolution and text mode
@@ -1109,6 +1164,8 @@ BootMaintCallback (
   UINTN                     Index;
   EFI_DEVICE_PATH_PROTOCOL  *File;
 
+  //DEBUG ((DEBUG_INFO, "Shawn debug BootMaintCallback\n"));
+
   if ((Action != EFI_BROWSER_ACTION_CHANGING) && (Action != EFI_BROWSER_ACTION_CHANGED) && (Action != EFI_BROWSER_ACTION_FORM_OPEN)) {
     //
     // Do nothing for other UEFI Action. Only do call back when data is changed or the form is open.
@@ -1118,6 +1175,7 @@ BootMaintCallback (
 
   Private = BMM_CALLBACK_DATA_FROM_THIS (This);
 
+  // DEBUG ((DEBUG_INFO, "Shawn Action = %x\n", Action));
   if (Action == EFI_BROWSER_ACTION_FORM_OPEN) {
     if (QuestionId == KEY_VALUE_TRIGGER_FORM_OPEN_ACTION) {
       if (!mFirstEnterBMMForm) {
@@ -1231,6 +1289,36 @@ BootMaintCallback (
       ChooseFile (NULL, L".efi", BootFromFile, &File);
     }
   } else if (Action == EFI_BROWSER_ACTION_CHANGED) {
+    {
+      EFI_INPUT_KEY  Key;
+      EFI_STATUS     Status;
+      UINTN          Size;
+      CHAR16*        ShawnString;
+      
+      Size = 0;
+      Status = gRT->GetVariable (L"ShawnChanged", &mShawnGuid, NULL, &Size, NULL);
+      if (Status == EFI_BUFFER_TOO_SMALL) {
+        DEBUG ((DEBUG_INFO, "Shawn BootMaintCallback Size %x\n", Size));
+        ShawnString = (CHAR16*)AllocatePool (Size);
+        Status = gRT->GetVariable (L"ShawnChanged", &mShawnGuid, NULL, &Size, ShawnString);
+        if (!EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_INFO, "Shawn BootMaintCallback Status %r\n", Status));
+          DEBUG ((DEBUG_INFO, "Shawn BootMaintCallback ShawnString %s\n", ShawnString));
+          CreatePopUp (
+            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
+            &Key,
+            L"Shawn Item Changed !",
+            L"---------------------",
+            ShawnString,
+            NULL
+            );
+        } else {
+          DEBUG ((DEBUG_INFO, "Shawn BootMaintCallback Status %r\n", Status));
+        }
+        FreePool (ShawnString);
+      }
+    }
+
     if ((Value == NULL) || (ActionRequest == NULL)) {
       return EFI_INVALID_PARAMETER;
     }
@@ -1686,6 +1774,7 @@ BootMaintenanceManagerUiLibConstructor (
 {
   EFI_STATUS  Status;
   UINT8       *Ptr;
+  UINTN       Size;
 
   Status = EFI_SUCCESS;
 
@@ -1752,7 +1841,30 @@ BootMaintenanceManagerUiLibConstructor (
   InitializeBmmConfig (mBmmCallbackInfo);
 
   BmmInitialBootModeInfo ();
-
+  DEBUG ((DEBUG_INFO, "Shawn BootMaintenanceManagerUiLibConstructor\n"));
+  Status = gRT->GetVariable (L"ShawnChangedItemInfo", &mShawnGuid, NULL, &Size, NULL);
+  if (Status == EFI_NOT_FOUND) {
+    DEBUG ((DEBUG_INFO, "Shawn BootMaintenanceManagerUiLibConstructor 2\n"));
+    DEBUG ((DEBUG_INFO, "Shawn GetVariable ShawnChangedItemInfo %r\n", Status));
+    mChangedItemInfoSet = AllocateZeroPool (sizeof (CHANGED_ITEM_INFO_SET));
+    if (mChangedItemInfoSet == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+    mChangedItemInfoSet->ChangedItemInfo = AllocateZeroPool (sizeof (CHANGED_ITEM_INFO) * MAX_HII_FORM);
+    if (mChangedItemInfoSet->ChangedItemInfo == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+    Status = gRT->SetVariable (
+                    L"ShawnChangedItemInfo",
+                    &mShawnGuid,
+                    EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                    sizeof (CHANGED_ITEM_INFO_SET),
+                    mChangedItemInfoSet
+                    );
+    if (!EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Shawn Set %r\n", Status));
+    }
+  }
   return EFI_SUCCESS;
 }
 
