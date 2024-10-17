@@ -110,45 +110,69 @@ ShowStringWithCreateDialog (
   IN CHAR16 *String
   ) 
 {
-    CHAR16 *StrStart;
-    CHAR16 *StrEnd;
-    CHAR16 **StrArray;
-    UINTN LineCount = 0;
-    UINTN Index = 0;
-    EFI_INPUT_KEY      Key;
+    CHAR16           *StrStart;
+    CHAR16           *StrEnd;
+    CHAR16           **StrArray;
+    UINTN            LineCount = 0;
+    UINTN            Index = 0;
+    EFI_INPUT_KEY    Key;
 
     StrStart = String;
     DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 1\n"));
+    DEBUG ((DEBUG_INFO, "Strsize %x\n", StrSize (String)));
+    DEBUG ((DEBUG_INFO, "String %s\n", String));
     while (*StrStart != CHAR_NULL) {
-        LineCount++;
-        StrEnd = StrStr (StrStart, L"\n\0");
-        if (StrEnd == NULL) {
-            break;
-        }
-        StrStart = StrEnd + 2;
+      DEBUG ((DEBUG_INFO, "start 1 %s\n", StrStart));
+      LineCount++;
+      StrEnd = StrStr (StrStart, L"\n");
+      DEBUG ((DEBUG_INFO, "Shawn StrStart %x\n", StrStart));
+      DEBUG ((DEBUG_INFO, "Shawn StrEnd %x\n", StrEnd));
+      if (StrEnd == NULL) {
+        break;
+      }
+      DEBUG ((DEBUG_INFO, "%x\n", (UINTN)(StrEnd - StrStart)));
+      DEBUG ((DEBUG_INFO, "memory\n"));
+      for (Index = 0; Index < (UINTN)(StrEnd - StrStart); Index++) {
+        DEBUG ((DEBUG_INFO, " 0x%4x", StrStart[Index++]));
+      }
+      DEBUG ((DEBUG_INFO, "\n"));
+      StrStart = StrEnd + 1;
+      DEBUG ((DEBUG_INFO, "start 2 %s\n", StrStart));
     }
+    DEBUG ((DEBUG_INFO, "Shawn LineCount %x\n", LineCount));
     DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 2\n"));
     StrArray = AllocateZeroPool (8 * sizeof(CHAR16 *));
     if (StrArray == NULL) {
-        return;
+      return;
     }
-    DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 3\n"));
+    // DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 3\n"));
     StrStart = String;
     while (*StrStart != CHAR_NULL) {
-        StrEnd = StrStr (StrStart, L"\n\0");
-        if (StrEnd != NULL) {
-            *StrEnd = CHAR_NULL;
-        }
-        DEBUG ((DEBUG_INFO, "Shawn StrStart: %s\n", StrStart));
-        StrArray[Index] = StrStart;
-        DEBUG ((DEBUG_INFO, "Shawn StrArray[Index]: %s\n", StrArray[Index]));
-        Index++;
-        if (StrEnd == NULL) {
-            break;
-        }
-        StrStart = StrEnd + 2;
+      StrEnd = StrStr (StrStart, L"\n");
+      if (StrEnd != NULL) {
+          *StrEnd = CHAR_NULL;
+      }
+      // DEBUG ((DEBUG_INFO, "Shawn1:\n"));
+      // DEBUG ((DEBUG_INFO, "%s\n", StrStart));
+      StrArray[Index] = StrStart;
+      // DEBUG ((DEBUG_INFO, "Shawn2:\n"));
+      // DEBUG ((DEBUG_INFO, "Shawn2: %s\n", StrArray[Index]));
+      // DEBUG ((DEBUG_INFO, "Index: %x\n", Index));
+      Index++;
+      if (StrEnd == NULL) {
+        // DEBUG ((DEBUG_INFO, "Shawn 3:\n"));
+          break;
+      }
+      StrStart = StrEnd + 1;
     }
-    DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 4\n"));
+
+    for (Index = 0; Index < 8; Index++) {
+      if (StrArray[Index] == NULL) {
+        StrArray[Index] = L" ";
+      }
+    }
+
+    // DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 4\n"));
     CreatePopUp (
       EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
       &Key,
@@ -162,7 +186,7 @@ ShowStringWithCreateDialog (
       StrArray[7],
       NULL
       );
-    DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 5\n"));
+    // DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 5\n"));
     FreePool(StrArray);
 }
 
@@ -188,7 +212,7 @@ DumpChangedData (
   CHAR16             *ShawnItemString;
   CHAR16             *ShawnOptionString;
   CHAR16             *ShawnString;
-  EFI_INPUT_KEY      Key;
+  // EFI_INPUT_KEY      Key;
   UINTN              StringSize;
   UINTN              TotalSize;
   CHAR16             *HelpInfoString;
@@ -206,6 +230,7 @@ DumpChangedData (
   }
 
 
+  DEBUG ((DEBUG_INFO, "Shawn HelpInfoString %x\n", HelpInfoString));
   DEBUG ((DEBUG_INFO, "Shawn DumpChangedData start\n"));
   ShawnString = AllocatePool (40);
   Link       = GetFirstNode (&mChangedData.Link);
@@ -215,13 +240,13 @@ DumpChangedData (
     Link       = GetNextNode (&mChangedData.Link, Link);
     ShawnItemString = HiiGetString (ConfigInfo->HiiHandle, ConfigInfo->Prompt, NULL);
     StringSize += StrSize (ShawnItemString);
-    // DEBUG ((DEBUG_INFO, "Shawn StringSize: %x\n", StringSize));
+    DEBUG ((DEBUG_INFO, "Shawn StringSize: %x\n", StringSize));
     // DEBUG ((DEBUG_INFO, "Shawn ShawnString Item: %s\n", ShawnItemString));
     // DEBUG ((DEBUG_INFO, "Shawn ConfigInfo->HiiHandle %x\n", ConfigInfo->HiiHandle));
     // DEBUG ((DEBUG_INFO, "Shawn ConfigInfo->Prompt %x\n", ConfigInfo->Prompt));
     ShawnOptionString = HiiGetString (ConfigInfo->HiiHandle, ConfigInfo->Option->Text, NULL);
     StringSize += StrSize (ShawnOptionString);
-    // DEBUG ((DEBUG_INFO, "Shawn StringSize: %x\n", StringSize));
+    DEBUG ((DEBUG_INFO, "Shawn StringSize: %x\n", StringSize));
     //ShawnString = AllocatePool (StringSize);
     // DEBUG ((DEBUG_INFO, "Shawn ShawnString Option: %s\n", ShawnOptionString));
     // UnicodeSPrint (
@@ -235,7 +260,7 @@ DumpChangedData (
     HelpInfoIndex = UnicodeSPrint (
                       HelpInfoString + HelpInfoIndex,
                       StringSize,
-                      L"%s%s\n\0",
+                      L"%s%s\n",
                       ShawnItemString,
                       ShawnOptionString
                       );
@@ -245,16 +270,17 @@ DumpChangedData (
   // //mFormDisplay->ConfirmDataChange();
   // DEBUG ((DEBUG_INFO, "Shawn PopupErrorMessage 2\n"));
   if (ShawnString != NULL) {
-    //ShowStringWithCreateDialog (HelpInfoString);
-   CreatePopUp (
-     EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-     &Key,
-     L"Shawn Item Changed | Setting",
-     L"----------------------------",
-     HelpInfoString,
-     NULL
-     );
+    ShowStringWithCreateDialog (HelpInfoString);
+  // CreatePopUp (
+  //   EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
+  //   &Key,
+  //   L"Shawn Item Changed | Setting",
+  //   L"----------------------------",
+  //   HelpInfoString,
+  //   NULL
+  //   );
   }
+  FreePool (HelpInfoString);
 
   return EFI_SUCCESS;
 }
