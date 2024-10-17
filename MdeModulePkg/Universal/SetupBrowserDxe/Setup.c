@@ -85,14 +85,25 @@ typedef struct _CHANGED_ITEM_INFO_SET {
 
 #define CHANGED_ITEM_DATA_SIGNATURE  SIGNATURE_32 ('s', 'm', 'c', 'd')
 typedef struct _CHANGED_ITEM_DATA {
-  UINT32          Signature;
-  LIST_ENTRY      Link;
-  EFI_HII_HANDLE  HiiHandle;
-  EFI_STRING_ID   Prompt;
+  UINT32             Signature;
+  LIST_ENTRY         Link;
+  EFI_HII_HANDLE     HiiHandle;
+  EFI_STRING_ID      Prompt;
+  QUESTION_OPTION    *Option;
 } CHANGED_ITEM_DATA;
 #define CHANGED_ITEM_DATA_FROM_LINK(a)  CR (a, CHANGED_ITEM_DATA, Link, CHANGED_ITEM_DATA_SIGNATURE)
 
 CHANGED_ITEM_DATA  mChangedData;
+
+
+UINT32
+PopupErrorMessage (
+  IN UINT32             BrowserStatus,
+  IN EFI_HII_HANDLE     HiiHandle,
+  IN EFI_IFR_OP_HEADER  *OpCode  OPTIONAL,
+  IN CHAR16             *ErrorString
+  );
+
 
 /**
   Discard data based on the input setting scope (Form, FormSet or System).
@@ -112,17 +123,56 @@ DumpChangedData (
 {
   LIST_ENTRY         *Link;
   CHANGED_ITEM_DATA  *ConfigInfo;
+  CHAR16             *ShawnItemString;
+  CHAR16             *ShawnOptionString;
   CHAR16             *ShawnString;
+   EFI_INPUT_KEY      Key;
+  UINTN              StringSize;
 
-  ConfigInfo = NULL;
+  ConfigInfo  = NULL;
+  ShawnString = NULL;
+  StringSize  = 0;
+
+
+  DEBUG ((DEBUG_INFO, "Shawn DumpChangedData start\n"));
   Link       = GetFirstNode (&mChangedData.Link);
+  DEBUG ((DEBUG_INFO, "Shawn mChangedData link %x\n", IsNull (&mChangedData.Link, Link)));
   while (!IsNull (&mChangedData.Link, Link)) {
     ConfigInfo = CHANGED_ITEM_DATA_FROM_LINK (Link);
     Link       = GetNextNode (&mChangedData.Link, Link);
-    ShawnString = HiiGetString (ConfigInfo->HiiHandle, ConfigInfo->Prompt, NULL);
-    DEBUG ((DEBUG_INFO, "Shawn ConfigInfo->HiiHandle %x\n", ConfigInfo->HiiHandle));
-    DEBUG ((DEBUG_INFO, "Shawn ConfigInfo->Prompt %x\n", ConfigInfo->Prompt));
-    DEBUG ((DEBUG_INFO, "Shawn ShawnString: %s\n", ShawnString));
+    ShawnItemString = HiiGetString (ConfigInfo->HiiHandle, ConfigInfo->Prompt, NULL);
+    StringSize += StrSize (ShawnItemString);
+    DEBUG ((DEBUG_INFO, "Shawn StringSize: %x\n", StringSize));
+    DEBUG ((DEBUG_INFO, "Shawn ShawnString Item: %s\n", ShawnItemString));
+    // DEBUG ((DEBUG_INFO, "Shawn ConfigInfo->HiiHandle %x\n", ConfigInfo->HiiHandle));
+    // DEBUG ((DEBUG_INFO, "Shawn ConfigInfo->Prompt %x\n", ConfigInfo->Prompt));
+    ShawnOptionString = HiiGetString (ConfigInfo->HiiHandle, ConfigInfo->Option->Text, NULL);
+    StringSize += StrSize (ShawnOptionString);
+    DEBUG ((DEBUG_INFO, "Shawn StringSize: %x\n", StringSize));
+    ShawnString = AllocatePool (StringSize);
+    DEBUG ((DEBUG_INFO, "Shawn ShawnString Option: %s\n", ShawnOptionString));
+    UnicodeSPrint (
+    ShawnString,
+    StringSize,
+    L"%s%s%s",
+    ShawnString,
+    ShawnItemString,
+    ShawnOptionString
+    );
+  }
+  DEBUG ((DEBUG_INFO, "Shawn PopupErrorMessage 1\n"));
+  //PopupErrorMessage (BROWSER_RECONNECT_FAIL, NULL, NULL, NULL);
+  //mFormDisplay->ConfirmDataChange();
+  DEBUG ((DEBUG_INFO, "Shawn PopupErrorMessage 2\n"));
+  if (ShawnString != NULL) {
+   CreatePopUp (
+     EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
+     &Key,
+     L"Shawn Item Changed !",
+     L"---------------------",
+     ShawnString,
+     NULL
+     );
   }
 
   return EFI_SUCCESS;
@@ -138,15 +188,52 @@ DumpChangedData (
 STATIC
 EFI_STATUS
 EFIAPI
+RemoveChangedItemData (
+  IN EFI_HII_HANDLE           HiiHandle,
+  IN FORM_BROWSER_STATEMENT   *Question
+  )
+{
+  CHANGED_ITEM_DATA      *ChangedData;
+  LIST_ENTRY             *Link;
+
+  ASSERT (HiiHandle != NULL);
+  ASSERT (Question != NULL);
+
+  DEBUG ((DEBUG_INFO, "Shawn RemoveChangedItemData start Setup\n"));
+
+  Link = GetFirstNode (&mChangedData.Link);
+  while (!IsNull (&mChangedData.Link, Link)) {
+    ChangedData = CHANGED_ITEM_DATA_FROM_LINK (Link);
+    if (ChangedData->HiiHandle == HiiHandle && ChangedData->Prompt == Question->Prompt) {
+      RemoveEntryList (&ChangedData->Link);
+      FreePool (ChangedData);
+      break;
+    }
+    Link = GetNextNode (&mChangedData.Link, Link);
+  }
+
+  DumpChangedData ();
+
+  return EFI_SUCCESS;
+}
+
+/**
+
+  Record changed setup data.
+
+**/
+STATIC
+EFI_STATUS
+EFIAPI
 AppendChangedItemData (
-  IN EFI_HII_HANDLE  HiiHandle,
-  IN EFI_STRING_ID   Prompt
+  IN EFI_HII_HANDLE           HiiHandle,
+  IN FORM_BROWSER_STATEMENT   *Question
   )
 {
   CHANGED_ITEM_DATA      *ChangedData;
 
   ASSERT (HiiHandle != NULL);
-  ASSERT (Prompt != 0);
+  ASSERT (Question != NULL);
 
   DEBUG ((DEBUG_INFO, "Shawn AppendChangedItemData start Setup\n"));
 
@@ -157,7 +244,8 @@ AppendChangedItemData (
 
   ChangedData->Signature = CHANGED_ITEM_DATA_SIGNATURE;
   ChangedData->HiiHandle = HiiHandle;
-  ChangedData->Prompt = Prompt;
+  ChangedData->Prompt    = Question->Prompt;
+  ChangedData->Option    = ValueToOption (Question, &(Question->HiiValue));
 
   InsertTailList (&mChangedData.Link, &ChangedData->Link);
 
@@ -5191,14 +5279,14 @@ IsQuestionValueChanged (
   HiiValue = &(Question->HiiValue);
   Option = ValueToOption (Question, HiiValue);
   ShawnString = HiiGetString (FormSet->HiiHandle, Option->Text, NULL);
-  DEBUG ((DEBUG_INFO, "Shawn Option->Text: %x\n", Option->Text));
-  DEBUG ((DEBUG_INFO, "Shawn Option->Value: %x\n", Option->Value));
-  DEBUG ((DEBUG_INFO, "Shawn ShawnString: %s\n", ShawnString));
+  // DEBUG ((DEBUG_INFO, "Shawn Option->Text: %x\n", Option->Text));
+  // DEBUG ((DEBUG_INFO, "Shawn Option->Value: %x\n", Option->Value));
+  // DEBUG ((DEBUG_INFO, "Shawn ShawnString: %s\n", ShawnString));
   // DEBUG ((DEBUG_INFO, "Shawn FormSet->HiiHandle: %x\n", FormSet->HiiHandle));
   // DEBUG ((DEBUG_INFO, "Shawn name: %s\n", Question->Storage->Name));
   if (&(Question->VarStoreInfo.VarName) != NULL) {
     // DEBUG ((DEBUG_INFO, "Shawn Question->VarStoreInfo.VarName is not NULL\n"));
-    DEBUG ((DEBUG_INFO, "Shawn Question->VarStoreInfo.VarName: %x\n", Question->VarStoreInfo.VarName));
+    // DEBUG ((DEBUG_INFO, "Shawn Question->VarStoreInfo.VarName: %x\n", Question->VarStoreInfo.VarName));
     //  DEBUG ((DEBUG_INFO, "Shawn Question->VarStoreInfo.VarName: %x\n", Question->VarStoreInfo.VarName));
     //  ShawnString = HiiGetString (FormSet->HiiHandle, Question->VarStoreInfo.VarName, NULL);
     //  DEBUG ((DEBUG_INFO, "Shawn Question->Prompt: %x\n", Question->Prompt));
@@ -5214,14 +5302,14 @@ IsQuestionValueChanged (
     //  DEBUG ((DEBUG_INFO, "Shawn ShawnString: %x\n", Question->HiiValue.Type));
     //  DEBUG ((DEBUG_INFO, "Shawn ShawnString: %x\n", Question->HiiValue.Value));
   } else {
-    DEBUG ((DEBUG_INFO, "Shawn Question->VarStoreInfo.VarName is NULL\n"));
+    // DEBUG ((DEBUG_INFO, "Shawn Question->VarStoreInfo.VarName is NULL\n"));
   }
 
   if (Question->VariableName != NULL) {
-    DEBUG ((DEBUG_INFO, "Shawn Question->VariableNam is not NULL\n"));
+    // DEBUG ((DEBUG_INFO, "Shawn Question->VariableNam is not NULL\n"));
     // DEBUG ((DEBUG_INFO, "Shawn Question->VariableName: %s\n", Question->VariableName));
   } else {
-    DEBUG ((DEBUG_INFO, "Shawn Question->VariableName is NULL\n"));
+    // DEBUG ((DEBUG_INFO, "Shawn Question->VariableName is NULL\n"));
   }
   //ShawnString = HiiGetString (FormSet->HiiHandle, Question->VarStoreInfo.VarName, NULL);
   // DEBUG ((DEBUG_INFO, "Shawn IsQuestionValueChanged String: %s\n", ShawnString));
@@ -5289,8 +5377,8 @@ IsQuestionValueChanged (
         (CompareMem (BackUpBuffer, Question->BufferValue, BufferWidth) != 0))
     {
       DEBUG ((DEBUG_INFO, "Shawn IsQuestionValueChanged ValueChanged 2\n"));
-      DEBUG ((DEBUG_INFO, "Shawn BackUpValue: %x\n", BackUpValue));
-      DEBUG ((DEBUG_INFO, "Shawn Question->HiiValue: %x\n", Question->HiiValue));
+      // DEBUG ((DEBUG_INFO, "Shawn BackUpValue: %x\n", BackUpValue));
+      // DEBUG ((DEBUG_INFO, "Shawn Question->HiiValue: %x\n", Question->HiiValue));
       // DEBUG ((DEBUG_INFO, "Shawn BackUpBuffer %s\n", BackUpBuffer));
       // DEBUG ((DEBUG_INFO, "Shawn Question->BufferValue %s\n", Question->BufferValue));
       ValueChanged = TRUE;
@@ -5307,6 +5395,12 @@ IsQuestionValueChanged (
 
   if (BackUpBuffer2 != NULL) {
     FreePool (BackUpBuffer2);
+  }
+
+  if (ValueChanged) {
+    AppendChangedItemData (FormSet->HiiHandle, Question);
+  } else {
+    RemoveChangedItemData (FormSet->HiiHandle, Question);
   }
 
   Question->ValueChanged = ValueChanged;
