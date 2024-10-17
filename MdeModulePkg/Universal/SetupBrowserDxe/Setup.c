@@ -9,6 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "Setup.h"
 #include <Library/DebugLib.h>
+#include <Library/CustomizedDisplayLib.h>
 
 SETUP_DRIVER_PRIVATE_DATA  mPrivateData = {
   SETUP_DRIVER_SIGNATURE,
@@ -104,6 +105,67 @@ PopupErrorMessage (
   IN CHAR16             *ErrorString
   );
 
+VOID
+ShowStringWithCreateDialog (
+  IN CHAR16 *String
+  ) 
+{
+    CHAR16 *StrStart;
+    CHAR16 *StrEnd;
+    CHAR16 **StrArray;
+    UINTN LineCount = 0;
+    UINTN Index = 0;
+    EFI_INPUT_KEY      Key;
+
+    StrStart = String;
+    DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 1\n"));
+    while (*StrStart != CHAR_NULL) {
+        LineCount++;
+        StrEnd = StrStr (StrStart, L"\n\0");
+        if (StrEnd == NULL) {
+            break;
+        }
+        StrStart = StrEnd + 2;
+    }
+    DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 2\n"));
+    StrArray = AllocateZeroPool (8 * sizeof(CHAR16 *));
+    if (StrArray == NULL) {
+        return;
+    }
+    DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 3\n"));
+    StrStart = String;
+    while (*StrStart != CHAR_NULL) {
+        StrEnd = StrStr (StrStart, L"\n\0");
+        if (StrEnd != NULL) {
+            *StrEnd = CHAR_NULL;
+        }
+        DEBUG ((DEBUG_INFO, "Shawn StrStart: %s\n", StrStart));
+        StrArray[Index] = StrStart;
+        DEBUG ((DEBUG_INFO, "Shawn StrArray[Index]: %s\n", StrArray[Index]));
+        Index++;
+        if (StrEnd == NULL) {
+            break;
+        }
+        StrStart = StrEnd + 2;
+    }
+    DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 4\n"));
+    CreatePopUp (
+      EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
+      &Key,
+      StrArray[0],
+      StrArray[1],
+      StrArray[2],
+      StrArray[3],
+      StrArray[4],
+      StrArray[5],
+      StrArray[6],
+      StrArray[7],
+      NULL
+      );
+    DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 5\n"));
+    FreePool(StrArray);
+}
+
 
 /**
   Discard data based on the input setting scope (Form, FormSet or System).
@@ -126,51 +188,70 @@ DumpChangedData (
   CHAR16             *ShawnItemString;
   CHAR16             *ShawnOptionString;
   CHAR16             *ShawnString;
-   EFI_INPUT_KEY      Key;
+  EFI_INPUT_KEY      Key;
   UINTN              StringSize;
+  UINTN              TotalSize;
+  CHAR16             *HelpInfoString;
+  UINTN          HelpInfoIndex;
 
   ConfigInfo  = NULL;
   ShawnString = NULL;
   StringSize  = 0;
+  HelpInfoIndex = 0;
+  TotalSize      = 1024;
+
+  HelpInfoString = AllocateZeroPool (TotalSize);
+  if (HelpInfoString == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
 
 
   DEBUG ((DEBUG_INFO, "Shawn DumpChangedData start\n"));
+  ShawnString = AllocatePool (40);
   Link       = GetFirstNode (&mChangedData.Link);
-  DEBUG ((DEBUG_INFO, "Shawn mChangedData link %x\n", IsNull (&mChangedData.Link, Link)));
+  // DEBUG ((DEBUG_INFO, "Shawn mChangedData link %x\n", IsNull (&mChangedData.Link, Link)));
   while (!IsNull (&mChangedData.Link, Link)) {
     ConfigInfo = CHANGED_ITEM_DATA_FROM_LINK (Link);
     Link       = GetNextNode (&mChangedData.Link, Link);
     ShawnItemString = HiiGetString (ConfigInfo->HiiHandle, ConfigInfo->Prompt, NULL);
     StringSize += StrSize (ShawnItemString);
-    DEBUG ((DEBUG_INFO, "Shawn StringSize: %x\n", StringSize));
-    DEBUG ((DEBUG_INFO, "Shawn ShawnString Item: %s\n", ShawnItemString));
+    // DEBUG ((DEBUG_INFO, "Shawn StringSize: %x\n", StringSize));
+    // DEBUG ((DEBUG_INFO, "Shawn ShawnString Item: %s\n", ShawnItemString));
     // DEBUG ((DEBUG_INFO, "Shawn ConfigInfo->HiiHandle %x\n", ConfigInfo->HiiHandle));
     // DEBUG ((DEBUG_INFO, "Shawn ConfigInfo->Prompt %x\n", ConfigInfo->Prompt));
     ShawnOptionString = HiiGetString (ConfigInfo->HiiHandle, ConfigInfo->Option->Text, NULL);
     StringSize += StrSize (ShawnOptionString);
-    DEBUG ((DEBUG_INFO, "Shawn StringSize: %x\n", StringSize));
-    ShawnString = AllocatePool (StringSize);
-    DEBUG ((DEBUG_INFO, "Shawn ShawnString Option: %s\n", ShawnOptionString));
-    UnicodeSPrint (
-    ShawnString,
-    StringSize,
-    L"%s%s%s",
-    ShawnString,
-    ShawnItemString,
-    ShawnOptionString
-    );
+    // DEBUG ((DEBUG_INFO, "Shawn StringSize: %x\n", StringSize));
+    //ShawnString = AllocatePool (StringSize);
+    // DEBUG ((DEBUG_INFO, "Shawn ShawnString Option: %s\n", ShawnOptionString));
+    // UnicodeSPrint (
+    // ShawnString,
+    // StringSize,
+    // L"%s%s%s",
+    // ShawnString,
+    // ShawnItemString,
+    // ShawnOptionString
+    // );
+    HelpInfoIndex = UnicodeSPrint (
+                      HelpInfoString + HelpInfoIndex,
+                      StringSize,
+                      L"%s%s\n\0",
+                      ShawnItemString,
+                      ShawnOptionString
+                      );
   }
-  DEBUG ((DEBUG_INFO, "Shawn PopupErrorMessage 1\n"));
-  //PopupErrorMessage (BROWSER_RECONNECT_FAIL, NULL, NULL, NULL);
-  //mFormDisplay->ConfirmDataChange();
-  DEBUG ((DEBUG_INFO, "Shawn PopupErrorMessage 2\n"));
+  // DEBUG ((DEBUG_INFO, "Shawn PopupErrorMessage 1\n"));
+  // //PopupErrorMessage (BROWSER_RECONNECT_FAIL, NULL, NULL, NULL);
+  // //mFormDisplay->ConfirmDataChange();
+  // DEBUG ((DEBUG_INFO, "Shawn PopupErrorMessage 2\n"));
   if (ShawnString != NULL) {
+    //ShowStringWithCreateDialog (HelpInfoString);
    CreatePopUp (
      EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
      &Key,
-     L"Shawn Item Changed !",
-     L"---------------------",
-     ShawnString,
+     L"Shawn Item Changed | Setting",
+     L"----------------------------",
+     HelpInfoString,
      NULL
      );
   }
