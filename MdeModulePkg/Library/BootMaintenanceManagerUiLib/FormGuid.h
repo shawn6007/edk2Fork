@@ -200,6 +200,7 @@ typedef struct {
   UINT8      Active;
   UINT8      ForceReconnect;
   UINT8      ShawnTest;
+  UINT8      ShawnTest2;
 } BMM_FAKE_NV_DATA;
 
 #endif

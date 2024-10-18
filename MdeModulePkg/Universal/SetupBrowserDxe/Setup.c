@@ -115,7 +115,7 @@ ShowStringWithCreateDialog (
     CHAR16           **StrArray;
     UINTN            LineCount = 0;
     UINTN            Index = 0;
-    EFI_INPUT_KEY    Key;
+    // EFI_INPUT_KEY    Key;
 
     StrStart = String;
     DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 1\n"));
@@ -128,12 +128,16 @@ ShowStringWithCreateDialog (
       DEBUG ((DEBUG_INFO, "Shawn StrStart %x\n", StrStart));
       DEBUG ((DEBUG_INFO, "Shawn StrEnd %x\n", StrEnd));
       if (StrEnd == NULL) {
+        DEBUG ((DEBUG_INFO, "Shawn StrEnd 1\n"));
+        for (Index = 0; Index < StrSize (String); Index++) {
+          DEBUG ((DEBUG_INFO, " 0x%04x", StrStart[Index]));
+        }
         break;
       }
       DEBUG ((DEBUG_INFO, "%x\n", (UINTN)(StrEnd - StrStart)));
       DEBUG ((DEBUG_INFO, "memory\n"));
       for (Index = 0; Index < (UINTN)(StrEnd - StrStart); Index++) {
-        DEBUG ((DEBUG_INFO, " 0x%4x", StrStart[Index++]));
+        DEBUG ((DEBUG_INFO, " 0x%04x", StrStart[Index]));
       }
       DEBUG ((DEBUG_INFO, "\n"));
       StrStart = StrEnd + 1;
@@ -145,8 +149,9 @@ ShowStringWithCreateDialog (
     if (StrArray == NULL) {
       return;
     }
-    // DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 3\n"));
+    DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 3\n"));
     StrStart = String;
+    Index = 0;
     while (*StrStart != CHAR_NULL) {
       StrEnd = StrStr (StrStart, L"\n");
       if (StrEnd != NULL) {
@@ -156,7 +161,7 @@ ShowStringWithCreateDialog (
       // DEBUG ((DEBUG_INFO, "%s\n", StrStart));
       StrArray[Index] = StrStart;
       // DEBUG ((DEBUG_INFO, "Shawn2:\n"));
-      // DEBUG ((DEBUG_INFO, "Shawn2: %s\n", StrArray[Index]));
+      DEBUG ((DEBUG_INFO, "Shawn2: %s\n", StrArray[Index]));
       // DEBUG ((DEBUG_INFO, "Index: %x\n", Index));
       Index++;
       if (StrEnd == NULL) {
@@ -168,25 +173,33 @@ ShowStringWithCreateDialog (
 
     for (Index = 0; Index < 8; Index++) {
       if (StrArray[Index] == NULL) {
+        DEBUG ((DEBUG_INFO, "Shawn array index %x\n", Index));
         StrArray[Index] = L" ";
       }
     }
 
     // DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 4\n"));
-    CreatePopUp (
-      EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-      &Key,
-      StrArray[0],
-      StrArray[1],
-      StrArray[2],
-      StrArray[3],
-      StrArray[4],
-      StrArray[5],
-      StrArray[6],
-      StrArray[7],
-      NULL
-      );
+    // CreatePopUp (
+      // EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
+      // &Key,
+      // StrArray[0],
+      // StrArray[1],
+      // StrArray[2],
+      // StrArray[3],
+      // StrArray[4],
+      // StrArray[5],
+      // StrArray[6],
+      // StrArray[7],
+      // NULL
+      // );
+    //CreatePopUp (
+    //  EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
+    //  &Key,
+    //  gShawnTestString,
+    //  NULL
+    //  );
     // DEBUG ((DEBUG_INFO, "Shawn ShowStringWithCreateDialog 5\n"));
+    // ShawnTest ();
     FreePool(StrArray);
 }
 
@@ -216,13 +229,18 @@ DumpChangedData (
   UINTN              StringSize;
   UINTN              TotalSize;
   CHAR16             *HelpInfoString;
-  UINTN          HelpInfoIndex;
+  UINTN              HelpInfoIndex;
+  UINTN              HelpInfoIndexTemp;
+  UINTN              Index;
 
-  ConfigInfo  = NULL;
-  ShawnString = NULL;
-  StringSize  = 0;
+  ConfigInfo    = NULL;
+  ShawnString   = NULL;
+  StringSize    = 0;
   HelpInfoIndex = 0;
-  TotalSize      = 1024;
+  HelpInfoIndexTemp = 0;
+  TotalSize     = 1024;
+  Index         = 0;
+
 
   HelpInfoString = AllocateZeroPool (TotalSize);
   if (HelpInfoString == NULL) {
@@ -236,6 +254,7 @@ DumpChangedData (
   Link       = GetFirstNode (&mChangedData.Link);
   // DEBUG ((DEBUG_INFO, "Shawn mChangedData link %x\n", IsNull (&mChangedData.Link, Link)));
   while (!IsNull (&mChangedData.Link, Link)) {
+    DEBUG ((DEBUG_INFO, "Shawn in the while loop %x\n", Index++));
     ConfigInfo = CHANGED_ITEM_DATA_FROM_LINK (Link);
     Link       = GetNextNode (&mChangedData.Link, Link);
     ShawnItemString = HiiGetString (ConfigInfo->HiiHandle, ConfigInfo->Prompt, NULL);
@@ -257,13 +276,20 @@ DumpChangedData (
     // ShawnItemString,
     // ShawnOptionString
     // );
-    HelpInfoIndex = UnicodeSPrint (
-                      HelpInfoString + HelpInfoIndex,
-                      StringSize,
-                      L"%s%s\n",
-                      ShawnItemString,
-                      ShawnOptionString
-                      );
+    DEBUG ((DEBUG_INFO, "Shawn HelpInfoString before: %S\n", HelpInfoString));
+    HelpInfoIndexTemp = UnicodeSPrint (
+                          HelpInfoString + HelpInfoIndex,
+                          StringSize,
+                          L"%s%s\n",
+                          ShawnItemString,
+                          ShawnOptionString
+                          );
+    HelpInfoIndex += HelpInfoIndexTemp;
+    HelpInfoIndex += 2;
+    DEBUG ((DEBUG_INFO, "Shawn HelpInfoIndex: %x\n", HelpInfoIndex));
+    DEBUG ((DEBUG_INFO, "Shawn HelpInfoString address:%x\n", HelpInfoString));
+    DEBUG ((DEBUG_INFO, "Shawn HelpInfoString after:\n"));
+    DEBUG ((DEBUG_INFO, "%S\n", HelpInfoString));
   }
   // DEBUG ((DEBUG_INFO, "Shawn PopupErrorMessage 1\n"));
   // //PopupErrorMessage (BROWSER_RECONNECT_FAIL, NULL, NULL, NULL);
@@ -282,6 +308,98 @@ DumpChangedData (
   }
   FreePool (HelpInfoString);
 
+  return EFI_SUCCESS;
+}
+
+
+/**
+  Discard data based on the input setting scope (Form, FormSet or System).
+
+  @param  FormSet                FormSet data structure.
+  @param  Form                   Form data structure.
+  @param  SettingScope           Setting Scope for Discard action.
+
+  @retval EFI_SUCCESS            The function completed successfully.
+  @retval EFI_UNSUPPORTED        Unsupport SettingScope.
+
+**/
+EFI_STATUS
+DumpChangedData2 (
+  VOID
+  )
+{
+  LIST_ENTRY         *Link;
+  CHANGED_ITEM_DATA  *ConfigInfo;
+  CHAR16             *ShawnItemString;
+  CHAR16             *ShawnOptionString;
+  CHAR16             *CombinedString;
+  EFI_INPUT_KEY      Key;
+  UINTN              Index;
+  CHAR16             **StrArray;
+
+  ConfigInfo    = NULL;
+  StrArray      = NULL;
+  Index         = 0;
+ 
+  DEBUG ((DEBUG_INFO, "Shawn DumpChangedData 2 start\n"));
+
+  StrArray = AllocateZeroPool (10 * sizeof(CHAR16 *));
+  if (StrArray == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  Link       = GetFirstNode (&mChangedData.Link);
+  while (!IsNull (&mChangedData.Link, Link)) {
+    DEBUG ((DEBUG_INFO, "Shawn in the while loop %x\n", Index));
+    CombinedString = AllocateZeroPool (0x100 * sizeof (CHAR16));
+    ConfigInfo = CHANGED_ITEM_DATA_FROM_LINK (Link);
+    Link       = GetNextNode (&mChangedData.Link, Link);
+    ShawnItemString = HiiGetString (ConfigInfo->HiiHandle, ConfigInfo->Prompt, NULL);
+    ShawnOptionString = HiiGetString (ConfigInfo->HiiHandle, ConfigInfo->Option->Text, NULL);
+    UnicodeSPrint (
+      CombinedString,
+      StrSize (ShawnItemString) + StrSize (ShawnOptionString) + 1,
+      L"%s %s\n",
+      ShawnItemString,
+      ShawnOptionString
+      );
+    StrArray[Index++] = CombinedString;
+    DEBUG ((DEBUG_INFO, "Shawn CombinedString %S\n", CombinedString));
+    FreePool (ShawnItemString);
+    FreePool (ShawnOptionString);
+  }
+  DEBUG ((DEBUG_INFO, "Shawn DumpChangedData 2 - 2\n"));
+  for (Index = 0; Index < 10; Index++) {
+    DEBUG ((DEBUG_INFO, "Shawn DumpChangedData 2 - 3\n"));
+    if (StrArray[Index] == NULL) {
+      DEBUG ((DEBUG_INFO, "Shawn DumpChangedData 2 - 4\n"));
+      StrArray[Index] = L" ";
+    }
+    DEBUG ((DEBUG_INFO, "Shawn DumpChangedData 2 - 5\n"));
+  }
+  DEBUG ((DEBUG_INFO, "Shawn DumpChangedData 2 - 6\n"));
+  if (StrArray != NULL) {
+    DEBUG ((DEBUG_INFO, "Shawn DumpChangedData 2 - 7\n"));
+    CreatePopUp (
+      EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
+      &Key,
+      L"Changed Item",
+      L"------------------------------",
+      StrArray[0],
+      StrArray[1],
+      StrArray[2],
+      StrArray[3],
+      StrArray[4],
+      StrArray[5],
+      StrArray[6],
+      StrArray[7],
+      StrArray[8],
+      StrArray[9],
+      NULL
+      );
+    DEBUG ((DEBUG_INFO, "Shawn DumpChangedData 2 - 8\n"));
+  }
+  DEBUG ((DEBUG_INFO, "Shawn DumpChangedData 2 - 9\n"));
   return EFI_SUCCESS;
 }
 
@@ -319,7 +437,7 @@ RemoveChangedItemData (
     Link = GetNextNode (&mChangedData.Link, Link);
   }
 
-  DumpChangedData ();
+  //DumpChangedData ();
 
   return EFI_SUCCESS;
 }
@@ -356,7 +474,8 @@ AppendChangedItemData (
 
   InsertTailList (&mChangedData.Link, &ChangedData->Link);
 
-  DumpChangedData ();
+  //DumpChangedData ();
+  DumpChangedData2 ();
 
   return EFI_SUCCESS;
 }

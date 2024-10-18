@@ -55,3 +55,5 @@
                                        #language fr-FR  "Enregistrer les modifications et quitter?"
 #string ARE_YOU_SURE                   #language en-US  "Press 'Y' to save and exit, 'N' to discard and exit, 'ESC' to cancel."
                                        #language fr-FR  "Pressez 'Y' pour sauvegarder et quitter, 'N' de se défaire et de sortie"
+#string STR_BOOT_SHAWN_TEST            #language en-US  "STRING TEST1\n"
+                                                        "STRING TEST2\n"

@@ -105,6 +105,7 @@ extern CHAR16  *gAdjustNumber;
 extern CHAR16  *gSaveChanges;
 extern CHAR16  *gNvUpdateMessage;
 extern CHAR16  *gInputErrorMessage;
+extern CHAR16  *gShawnTestString;
 
 /**
 

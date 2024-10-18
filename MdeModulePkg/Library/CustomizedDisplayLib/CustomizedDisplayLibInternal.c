@@ -35,6 +35,7 @@ CHAR16  *gAdjustNumber;
 CHAR16  *gSaveChanges;
 CHAR16  *gNvUpdateMessage;
 CHAR16  *gInputErrorMessage;
+CHAR16  *gShawnTestString;
 
 /**
 
@@ -735,6 +736,7 @@ InitializeLibStrings (
 
   gNvUpdateMessage   = L"Shawn change";
   gInputErrorMessage = LibGetToken (STRING_TOKEN (INPUT_ERROR_MESSAGE), mCDLStringPackHandle);
+  gShawnTestString = LibGetToken (STRING_TOKEN (STR_BOOT_SHAWN_TEST), mCDLStringPackHandle);
 
   //
   // SpaceBuffer;

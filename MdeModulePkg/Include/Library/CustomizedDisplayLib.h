@@ -30,6 +30,12 @@ Statement
 +------------------------------------------------------------------------------+
   StatusBar
 **/
+EFI_STATUS
+EFIAPI
+ShawnTest (
+  VOID
+  );
+
 
 /**
   This funtion defines Page Frame and Backgroud.

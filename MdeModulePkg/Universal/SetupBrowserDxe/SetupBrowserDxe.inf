@@ -50,6 +50,7 @@
   DevicePathLib
   PcdLib
   UefiLib
+  CustomizedDisplayLib
 
 [Guids]
   gEfiHiiPlatformSetupFormsetGuid               ## SOMETIMES_CONSUMES  ## GUID

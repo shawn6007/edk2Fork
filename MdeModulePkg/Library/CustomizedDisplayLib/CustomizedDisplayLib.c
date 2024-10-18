@@ -40,6 +40,42 @@ Statement
   StatusBar
 **/
 
+EFI_STATUS
+EFIAPI
+ShawnTest (
+  VOID
+  )
+{
+  CHAR16         YesResponse;
+  CHAR16         NoResponse;
+  EFI_INPUT_KEY  Key;
+
+  gST->ConIn->ReadKeyStroke (gST->ConIn, &Key);
+
+  YesResponse = gYesResponse[0];
+  NoResponse  = gNoResponse[0];
+
+  //
+  // If NV flag is up, prompt user
+  //
+  do {
+    CreateDialog (&Key, gLibEmptyString, gShawnTestString, gLibEmptyString, NULL);
+  } while
+  (
+   (Key.ScanCode != SCAN_ESC) &&
+   ((Key.UnicodeChar | UPPER_LOWER_CASE_OFFSET) != (NoResponse | UPPER_LOWER_CASE_OFFSET)) &&
+   ((Key.UnicodeChar | UPPER_LOWER_CASE_OFFSET) != (YesResponse | UPPER_LOWER_CASE_OFFSET))
+  );
+
+  if (Key.ScanCode == SCAN_ESC) {
+    return BROWSER_ACTION_NONE;
+  } else if ((Key.UnicodeChar | UPPER_LOWER_CASE_OFFSET) == (YesResponse | UPPER_LOWER_CASE_OFFSET)) {
+    return BROWSER_ACTION_SUBMIT;
+  } else {
+    return BROWSER_ACTION_DISCARD;
+  }
+}
+
 /**
   This funtion defines Page Frame and Backgroud.
 

@@ -280,8 +280,10 @@
 #string STR_NONE_FLOW_CONTROL          #language fr-FR  "None"
                                        #language en-US  "None"
 #string STR_BOOT_SHAWN                 #language en-US  "Shawn Add item"
-#string STR_BOOT_SHAWN_YES                 #language en-US  "YES"
-#string STR_BOOT_SHAWN_NO                 #language en-US  "NO"
+#string STR_BOOT_SHAWN2                #language en-US  "Shawn Add item2"
+#string STR_BOOT_SHAWN_YES             #language en-US  "YES"
+#string STR_BOOT_SHAWN_NO              #language en-US  "NO"
+
 
 //
 // BugBug : need someone to translate these strings to french

@@ -289,6 +289,13 @@ formset
          option text = STRING_TOKEN(STR_BOOT_SHAWN_YES), value = 0, flags = DEFAULT;
          option text = STRING_TOKEN(STR_BOOT_SHAWN_NO), value = 1, flags = MANUFACTURING;
        endoneof;
+
+       oneof varid = BmmData.ShawnTest2,
+         prompt      = STRING_TOKEN(STR_BOOT_SHAWN2),
+         help        = STRING_TOKEN(STR_BOOT_SHAWN2),
+         option text = STRING_TOKEN(STR_BOOT_SHAWN_YES), value = 0, flags = DEFAULT;
+         option text = STRING_TOKEN(STR_BOOT_SHAWN_NO), value = 1, flags = MANUFACTURING;
+       endoneof;
   endform;
 
   form formid = FORM_CON_COM_ID,
